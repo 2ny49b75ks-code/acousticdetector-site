@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://acousticdetector.netlify.app/</loc>
+    <lastmod>2026-09-27</lastmod>
+    <xhtml:link rel="alternate" hreflang="fr-CA" href="https://acousticdetector.netlify.app/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://acousticdetector.netlify.app/en.html"/>
+  </url>
+  <url>
+    <loc>https://acousticdetector.netlify.app/en.html</loc>
+    <lastmod>2026-09-27</lastmod>
+    <xhtml:link rel="alternate" hreflang="fr-CA" href="https://acousticdetector.netlify.app/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://acousticdetector.netlify.app/en.html"/>
+  </url>
+  <url>
+    <loc>https://acousticdetector.netlify.app/support.html</loc>
+    <lastmod>2026-09-27</lastmod>
+    <xhtml:link rel="alternate" hreflang="fr-CA" href="https://acousticdetector.netlify.app/support.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://acousticdetector.netlify.app/support-en.html"/>
+  </url>
+  <url>
+    <loc>https://acousticdetector.netlify.app/support-en.html</loc>
+    <lastmod>2026-09-27</lastmod>
+    <xhtml:link rel="alternate" hreflang="fr-CA" href="https://acousticdetector.netlify.app/support.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://acousticdetector.netlify.app/support-en.html"/>
+  </url>
+  <url>
+    <loc>https://acousticdetector.netlify.app/privacy.html</loc>
+    <lastmod>2026-09-27</lastmod>
+    <xhtml:link rel="alternate" hreflang="fr-CA" href="https://acousticdetector.netlify.app/privacy.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://acousticdetector.netlify.app/privacy-en.html"/>
+  </url>
+  <url>
+    <loc>https://acousticdetector.netlify.app/privacy-en.html</loc>
+    <lastmod>2026-09-27</lastmod>
+    <xhtml:link rel="alternate" hreflang="fr-CA" href="https://acousticdetector.netlify.app/privacy.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://acousticdetector.netlify.app/privacy-en.html"/>
+  </url>
+</urlset>
