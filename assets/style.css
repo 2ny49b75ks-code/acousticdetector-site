@@ -119,8 +119,12 @@ nav.top-nav a:hover { color: var(--green-light); }
 .lang-toggle a.active { background: var(--green-grad); color: #0B2405; }
 .top-right .btn-gold { padding: 9px 18px; font-size: 0.75em; }
 @media (max-width: 1080px) { nav.top-nav { display: none; } }
-header.top .brand { flex: none; }
+header.top .brand { flex: none; min-width: 0; }
 @media (max-width: 480px) { .top-right .btn-gold { display: none; } }
+@media (max-width: 400px) {
+  .brand .wordmark { display: none; }
+  header.top .wrap { gap: 10px; }
+}
 
 /* ---------- Hero ---------- */
 section.hero { position: relative; overflow: hidden; padding: 64px 0 0; }
