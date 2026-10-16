@@ -1,0 +1,4 @@
+# Acoustic Detector — site statique, aucune étape de compilation.
+# Le site publié est le dossier public/ ; le dossier tools/ (générateur) n'est pas mis en ligne.
+[build]
+  publish = "public"
