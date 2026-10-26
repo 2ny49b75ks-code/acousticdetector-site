@@ -9,9 +9,10 @@
 <script>
   (function () {
     var lang = (navigator.language || "fr").toLowerCase();
-    window.location.replace(lang.indexOf("fr") === 0 ? "fr/index.html" : "en/index.html");
+    var map = {fr: "fr", es: "es", de: "de", pt: "pt", it: "it", ja: "ja"};
+    window.location.replace((map[lang.slice(0, 2)] || "en") + "/index.html");
   })();
 </script>
 </head>
-<body style="background:#1E0C36;color:#fff;font-family:sans-serif"><p><a href="fr/index.html" style="color:#39FF14">Français</a> — <a href="en/index.html" style="color:#39FF14">English</a></p></body>
+<body style="background:#1E0C36;color:#fff;font-family:sans-serif"><p><a href="fr/index.html" style="color:#39FF14">Français</a> — <a href="en/index.html" style="color:#39FF14">English</a> — <a href="es/index.html" style="color:#39FF14">Español</a> — <a href="de/index.html" style="color:#39FF14">Deutsch</a> — <a href="pt/index.html" style="color:#39FF14">Português</a> — <a href="it/index.html" style="color:#39FF14">Italiano</a> — <a href="ja/index.html" style="color:#39FF14">日本語</a></p></body>
 </html>

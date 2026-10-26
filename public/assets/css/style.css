@@ -288,3 +288,19 @@ section { padding: 80px 0; }
   .cta-band { padding: 36px 22px; }
   .hero { padding: 56px 0 48px; }
 }
+
+/* ---------- Japonais : polices système et coupures de ligne ---------- */
+:lang(ja) body, :lang(ja) h1, :lang(ja) h2, :lang(ja) h3, :lang(ja) .btn, :lang(ja) .eyebrow { font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", "Meiryo", sans-serif; }
+:lang(ja) h1, :lang(ja) h2, :lang(ja) h3 { word-break: keep-all; overflow-wrap: anywhere; line-break: strict; letter-spacing: 0; }
+:lang(ja) p, :lang(ja) li { line-break: strict; overflow-wrap: anywhere; }
+/* sélecteur de langue à 7 entrées : reste lisible sur petit écran */
+.lang-switch { flex-wrap: wrap; justify-content: flex-end; }
+@media (max-width: 720px) {
+  .site-header__row { flex-wrap: wrap; height: auto; padding-top: 10px; padding-bottom: 8px; gap: 6px 12px; }
+  .brand { order: 1; margin-right: auto; }
+  .header-actions { display: contents; }
+  .nav-toggle { order: 2; }
+  .lang-switch { order: 3; width: 100%; justify-content: space-between; gap: 2px; font-size: .78rem; }
+  .lang-switch a { padding: 5px 9px; }
+  .main-nav { inset: 112px 0 0 0; }
+}

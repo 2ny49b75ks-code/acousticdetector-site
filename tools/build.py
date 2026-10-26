@@ -8,15 +8,24 @@ conservées : elles étaient déjà publiées.
 
 Lancer :  python3 tools/prepare_assets.py   (une fois, ou après de nouvelles captures)
           python3 tools/build.py            (après toute modification du texte), puis commit + push."""
+import importlib
 import json
+import sys
 from datetime import date
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 ROOT = Path(__file__).resolve().parent.parent / "public"
 SITE = "https://acousticdetector.netlify.app"
 EMAIL = "j_david@live.ca"
 APPSTORE_BASE = "https://apps.apple.com/ca/app/acoustic-detector/id6810440422"
 APPSTORE = {"fr": APPSTORE_BASE + "?l=fr-CA", "en": APPSTORE_BASE + "?l=en-CA"}
+LANGS = ["fr", "en", "es", "de", "pt", "it", "ja"]   # ordre du sélecteur de langue
+EXTRA = ["es", "de", "pt", "it", "ja"]                # langues dont le texte est dans tools/i18n/<lang>.py
+LABELS = {"fr": "FR", "en": "EN"}
+HREFLANGS = {"fr": "fr", "en": "en"}
+LOCALES = {"fr": "fr_CA", "en": "en_CA"}
 TODAY = date.today().isoformat()
 
 JDG_APPS = {
@@ -61,9 +70,10 @@ HOME = {
         lead="Acoustic Detector transforme votre iPhone en outil d'acoustique. Mesurez le bruit, analysez le spectre, scannez une pièce au LiDAR, puis découvrez où elle résonne et combien de mousse acoustique ajouter. Gratuite, 100 % hors ligne, en 7 langues.",
         meta=[("iOS 17+", "requis"), ("", "iPhone"), ("7 langues", "FR · EN · ES · DE · PT · IT · JA"), ("Gratuite", "achat unique facultatif")],
         hero_alt="Réverbération d'une pièce par bande d'octave, comparée à la cible de 0,50 seconde",
-        new_badge="Nouveauté", new_h="Version 1.4 : un accordeur gratuit et 7 langues",
+        new_badge="Nouveauté", new_h="Version 1.4.1 : un accordeur gratuit, plus stable et plus précis",
         new_lead="Acoustic Detector ajoute un accordeur gratuit pour guitare, ukulélé, violon et plus, et parle maintenant français, anglais, espagnol, allemand, portugais, italien et japonais.",
         new=["Accordeur gratuit : guitare (5 accordages), ukulélé, violon, alto, violoncelle, mandoline, banjo, et mode chromatique pour la voix",
+             "Version 1.4.1 : lecture plus stable qui ignore les mesures aberrantes, aiguille plus précise, indicateur du niveau du signal, ukulélé baryton",
              "Notes en Do Ré Mi ou en C D E selon la langue, aiguille précise, vibration quand c'est juste",
              "7 langues, au choix dans le menu principal",
              "Version 1.2 : le RT60 par bande d'octave, de 125 Hz à 4 kHz, avec votre cible",
@@ -71,7 +81,7 @@ HOME = {
              "Cartographie du bruit : mesurez à plusieurs endroits et obtenez une carte de chaleur",
              "Double cloison : fréquence de résonance et isolement par fréquence",
              "L'app est gratuite : sonomètre, analyseur, tableau des mesures et export PDF inclus ; Traitement et Calculateurs avec un achat unique"],
-        new_status="Version 1.4 disponible sur l'App Store depuis le 21 octobre 2026.",
+        new_status="Version 1.4.1 disponible sur l'App Store.",
         callout="<p><strong>Un outil indicatif, honnêtement présenté.</strong> Le micro de l'iPhone n'est pas un instrument certifié : les valeurs affichées sont des estimations, clairement identifiées comme telles, avec un étalonnage manuel facultatif pour affiner la précision. Acoustic Detector ne remplace pas un instrument calibré pour une conformité réglementaire officielle.</p>",
         what_eyebrow="Ce que fait Acoustic Detector", what_h="Un seul appareil pour mesurer et corriger",
         what=[("Sonomètre en direct", "Niveau en dB en temps réel, avec minimum, moyenne et maximum, étalonnage du micro et historique en couleurs.", ""),
@@ -82,7 +92,7 @@ HOME = {
               ("Accordeur", "Guitare, ukulélé, violon, alto, violoncelle, mandoline, banjo, ou n'importe quelle note et votre voix : l'aiguille et les cents en direct.", "Nouveau"),
               ("Calculateurs", "Somme de sources sonores, pression acoustique, fréquence et longueur d'onde, et calcul de double cloison.", "")],
         shots_eyebrow="Aperçu", shots_h="Sobre, précis, prêt pour le terrain",
-        shots=[("menu", "Menu principal", "Menu"), ("sono", "Sonomètre et étalonnage du micro", "Sonomètre"),
+        shots=[("menu", "Menu principal", "Menu"), ("tuner", "Accordeur de guitare avec aiguille et cents", "Accordeur"), ("sono", "Sonomètre et étalonnage du micro", "Sonomètre"),
                ("freq", "Réverbération par fréquence et absorption des matériaux", "RT60 par fréquence"),
                ("noise", "Carte de chaleur du bruit d'une pièce", "Carte du bruit"), ("wall", "Calcul de double cloison", "Double cloison"),
                ("lidar", "Scan de pièce par LiDAR", "Scan LiDAR"), ("table", "Tableau des mesures", "Tableau")],
@@ -90,7 +100,7 @@ HOME = {
         who=[("Entrepreneurs et techniciens", "Mesurez le bruit d'un lieu, vérifiez une cloison, estimez le traitement d'une pièce avant de soumissionner."),
              ("Studios, musiciens, audio", "Calculez la réverbération d'une salle, repérez les graves problématiques, estimez la mousse à ajouter."),
              ("Maison et bureau", "Cinéma maison, bureau à la maison, salle de réunion : trouvez où ça résonne et quoi y faire.")],
-        nums=[("4", "Modes de mesure"), ("6", "Bandes d'octave"), ("10", "Matériaux acoustiques"), ("100 %", "Hors ligne")],
+        nums=[("5", "Modes de mesure"), ("6", "Bandes d'octave"), ("10", "Matériaux acoustiques"), ("100 %", "Hors ligne")],
         price_eyebrow="Prix", price_h="Gratuite, avec un achat unique facultatif",
         plans=[("Gratuit", "0 $", ["Sonomètre en direct et étalonnage", "Analyseur de spectre", "Accordeur (guitare, violon, voix et plus)", "Tableau des mesures", "Export PDF avec graphiques"], False),
                ("Complet", "4,99 $ CA, achat unique", ["Tout le gratuit", "Traitement : RT60, absorption, scan LiDAR, carte du bruit", "Calculateurs : sources, pression, ondes, double cloison", "Pas d'abonnement"], True)],
@@ -105,9 +115,10 @@ HOME = {
         lead="Acoustic Detector turns your iPhone into an acoustics toolkit. Measure noise, analyze the spectrum, scan a room with LiDAR, then find out where it resonates and how much acoustic foam to add. Free, 100% offline, in 7 languages.",
         meta=[("iOS 17+", "required"), ("", "iPhone"), ("7 languages", "EN · FR · ES · DE · PT · IT · JA"), ("Free", "optional one-time purchase")],
         hero_alt="A room's reverberation by octave band, compared with the 0.50-second target",
-        new_badge="What's new", new_h="Version 1.4: a free tuner and 7 languages",
+        new_badge="What's new", new_h="Version 1.4.1: a free tuner, more stable and more precise",
         new_lead="Acoustic Detector adds a free tuner for guitar, ukulele, violin and more, and now speaks English, French, Spanish, German, Portuguese, Italian and Japanese.",
         new=["Free tuner: guitar (5 tunings), ukulele, violin, viola, cello, mandolin, banjo, and a chromatic mode for voice",
+             "Version 1.4.1: a steadier reading that ignores stray measurements, a more precise needle, a signal level meter, baritone ukulele",
              "Note names as Do Re Mi or C D E depending on the language, a precise needle, a vibration when in tune",
              "7 languages, selectable from the main menu",
              "Version 1.2: RT60 per octave band, from 125 Hz to 4 kHz, against your target",
@@ -115,7 +126,7 @@ HOME = {
              "Noise map: measure at several spots and get a heat map",
              "Double wall: resonance frequency and insulation by frequency",
              "The app is free: sound meter, analyzer, measurements table and PDF export included; Treatment and Calculators with a one-time purchase"],
-        new_status="Version 1.4 available on the App Store since October 21, 2026.",
+        new_status="Version 1.4.1 available on the App Store.",
         callout="<p><strong>An indicative tool, honestly presented.</strong> The iPhone's microphone is not a certified instrument: values shown are estimates, clearly labeled as such, with optional manual calibration to sharpen accuracy. Acoustic Detector does not replace a calibrated instrument for official regulatory compliance.</p>",
         what_eyebrow="What Acoustic Detector does", what_h="One device to measure and correct",
         what=[("Live sound meter", "Real-time dB level with minimum, average and maximum, microphone calibration and a color-coded history.", ""),
@@ -126,7 +137,7 @@ HOME = {
               ("Tuner", "Guitar, ukulele, violin, viola, cello, mandolin, banjo, or any note and your voice: a needle and live cents.", "New"),
               ("Calculators", "Sum of sound sources, sound pressure, frequency and wavelength, and a double-wall calculator.", "")],
         shots_eyebrow="Preview", shots_h="Clean, precise, ready for the field",
-        shots=[("menu", "Main menu", "Menu"), ("sono", "Sound meter and mic calibration", "Sound meter"),
+        shots=[("menu", "Main menu", "Menu"), ("tuner", "Guitar tuner with needle and cents", "Tuner"), ("sono", "Sound meter and mic calibration", "Sound meter"),
                ("freq", "Reverberation by frequency and material absorption", "RT60 by frequency"),
                ("noise", "Noise heat map of a room", "Noise map"), ("wall", "Double-wall calculator", "Double wall"),
                ("lidar", "LiDAR room scan", "LiDAR scan"), ("table", "Measurements table", "Table")],
@@ -134,7 +145,7 @@ HOME = {
         who=[("Contractors and technicians", "Measure a site's noise, check a partition, estimate a room's treatment before you quote."),
              ("Studios, musicians, audio", "Calculate a room's reverberation, spot the problem bass frequencies, estimate the foam to add."),
              ("Home and office", "Home theater, home office, meeting room: find where it resonates and what to do about it.")],
-        nums=[("4", "Measurement modes"), ("6", "Octave bands"), ("10", "Acoustic materials"), ("100%", "Offline")],
+        nums=[("5", "Measurement modes"), ("6", "Octave bands"), ("10", "Acoustic materials"), ("100%", "Offline")],
         price_eyebrow="Price", price_h="Free, with one optional purchase",
         plans=[("Free", "$0", ["Live sound meter and calibration", "Spectrum analyzer", "Tuner (guitar, violin, voice and more)", "Measurements table", "PDF export with charts"], False),
                ("Complete", "CA$4.99, one-time purchase", ["Everything in Free", "Treatment: RT60, absorption, LiDAR scan, noise map", "Calculators: sources, pressure, waves, double wall", "No subscription"], True)],
@@ -158,6 +169,8 @@ FEATURES = {
                  ("Tableau des mesures", "Le journal de toutes vos mesures, avec filtre, tri et export en rapport PDF avec graphiques.")],
         s_eyebrow="En détail", s_h="Chaque outil, de près",
         spots=[
+            ("tuner", "Accordeur", "Accordez à l'oreille, ou laissez l'aiguille faire le travail.",
+             ["Guitare (5 accordages), ukulélé (dont Sol grave et baryton), violon, alto, violoncelle, mandoline et banjo", "Mode chromatique pour la voix et n'importe quelle note", "Aiguille avec cents en direct et réglette de précision de ±10 cents, vibration quand c'est juste", "Lecture stabilisée qui ignore les mesures aberrantes, avec indicateur du niveau du signal", "Fréquence de référence réglable de 430 à 450 Hz, et gratuit"]),
             ("sono", "Sonomètre, étalonnage et historique", "Le sonomètre le plus simple à ouvrir sur le terrain.",
              ["Niveau en direct, minimum, moyenne et maximum", "Étalonnage du micro sur un instrument de référence, avec l'état d'étalonnage noté sur chaque mesure", "Historique des sessions avec leur courbe en couleurs", "Partage de l'image ou ajout au tableau des mesures"]),
             ("freq", "Réverbération par fréquence", "Savoir où la pièce pose problème, pas seulement si elle en pose un.",
@@ -174,7 +187,7 @@ FEATURES = {
              ["Chaque mesure s'ajoute à un tableau central, filtrable par type", "Rapport PDF avec graphiques et schéma 3D de la pièce", "Enregistrement d'un graphique dans Photos, ou partage par les outils d'iOS", "Tout reste sur votre appareil : aucun compte, aucun serveur"]),
         ],
         cmp_h="Gratuit ou Acoustic Detector Complet", cmp_cols=("", "Gratuit", "Complet"),
-        cmp=[("Sonomètre en direct et étalonnage", "✓", "✓"), ("Analyseur de spectre", "✓", "✓"), ("Tableau des mesures et export PDF", "✓", "✓"),
+        cmp=[("Sonomètre en direct et étalonnage", "✓", "✓"), ("Analyseur de spectre", "✓", "✓"), ("Accordeur", "✓", "✓"), ("Tableau des mesures et export PDF", "✓", "✓"),
              ("RT60 de la pièce et mousse à ajouter", "—", "✓"), ("RT60 par bande d'octave et absorption", "—", "✓"), ("Scan LiDAR de la pièce", "—", "✓"),
              ("Cartographie du bruit", "—", "✓"), ("Calculateurs et double cloison", "—", "✓")],
         cmp_note="« Acoustic Detector Complet » est un achat unique de 4,99 $ CA, sans abonnement.",
@@ -193,6 +206,8 @@ FEATURES = {
                  ("Measurements table", "A log of everything you measure, with filter, sort and export to a PDF report with charts.")],
         s_eyebrow="In detail", s_h="Every tool, up close",
         spots=[
+            ("tuner", "Tuner", "Tune by ear, or let the needle do the work.",
+             ["Guitar (5 tunings), ukulele (including low-G and baritone), violin, viola, cello, mandolin and banjo", "Chromatic mode for voice and any note", "A needle with live cents and a ±10-cent fine-tuning strip, with a vibration when in tune", "A steadied reading that ignores stray measurements, with a signal level meter", "Reference pitch adjustable from 430 to 450 Hz, and free"]),
             ("sono", "Sound meter, calibration and history", "The simplest sound meter to open in the field.",
              ["Live level, minimum, average and maximum", "Microphone calibration against a reference instrument, with the calibration state noted on every measurement", "Session history with its color-coded curve", "Share the image or add it to the measurements table"]),
             ("freq", "Reverberation by frequency", "Know where the room has a problem, not just whether it has one.",
@@ -209,7 +224,7 @@ FEATURES = {
              ["Every measurement is added to a central table, filterable by type", "PDF report with charts and the room's 3D diagram", "Save a chart to Photos, or share it with iOS's tools", "Everything stays on your device: no account, no server"]),
         ],
         cmp_h="Free or Acoustic Detector Complete", cmp_cols=("", "Free", "Complete"),
-        cmp=[("Live sound meter and calibration", "✓", "✓"), ("Spectrum analyzer", "✓", "✓"), ("Measurements table and PDF export", "✓", "✓"),
+        cmp=[("Live sound meter and calibration", "✓", "✓"), ("Spectrum analyzer", "✓", "✓"), ("Tuner", "✓", "✓"), ("Measurements table and PDF export", "✓", "✓"),
              ("Room RT60 and foam to add", "—", "✓"), ("RT60 per octave band and absorption", "—", "✓"), ("LiDAR room scan", "—", "✓"),
              ("Noise map", "—", "✓"), ("Calculators and double wall", "—", "✓")],
         cmp_note="\"Acoustic Detector Complete\" is a one-time CA$4.99 purchase, with no subscription.",
@@ -226,7 +241,7 @@ DOWNLOAD = {
         specs=[("Système", "iOS 17+"), ("Appareil", "iPhone"), ("Prix", "Gratuite"), ("Achat unique", "4,99 $ CA")],
         req_note="Acoustic Detector fonctionne sur tout iPhone sous iOS 17 ou plus récent. Le scan de pièce par LiDAR demande un iPhone Pro équipé d'un capteur LiDAR (iPhone 12 Pro et plus récent) ; sur les autres iPhone, les dimensions de la pièce s'entrent à la main.",
         sheet_eyebrow="Fiche technique", sheet_h="Informations sur l'application",
-        sheet=[("Éditeur", "JDG inc., Québec, Canada"), ("Identifiant", "JDG-inc.AcousticDetector"), ("Langues", "Français, anglais"), ("Exports", "Rapport PDF avec graphiques, partage d'image")],
+        sheet=[("Éditeur", "JDG inc., Québec, Canada"), ("Identifiant", "JDG-inc.AcousticDetector"), ("Langues", "Français, anglais, espagnol, allemand, portugais (Brésil), italien, japonais"), ("Exports", "Rapport PDF avec graphiques, partage d'image")],
         faq_eyebrow="Questions fréquentes", faq_h="Avant de télécharger",
         faq=[("Mon appareil est-il compatible ?", "Si votre iPhone tourne sous iOS 17 ou plus récent, il est compatible. Le LiDAR n'est pas requis : il ajoute seulement le scan automatique de la pièce."),
              ("Combien ça coûte ?", "L'app est gratuite. L'achat unique facultatif « Acoustic Detector Complet » (4,99 $ CA) débloque Traitement et Calculateurs, sans abonnement."),
@@ -245,7 +260,7 @@ DOWNLOAD = {
         specs=[("System", "iOS 17+"), ("Device", "iPhone"), ("Price", "Free"), ("One-time purchase", "CA$4.99")],
         req_note="Acoustic Detector runs on any iPhone with iOS 17 or later. The LiDAR room scan needs an iPhone Pro with a LiDAR sensor (iPhone 12 Pro and later); on other iPhones, you enter the room's dimensions by hand.",
         sheet_eyebrow="Technical sheet", sheet_h="App information",
-        sheet=[("Publisher", "JDG inc., Quebec, Canada"), ("Identifier", "JDG-inc.AcousticDetector"), ("Languages", "English, French"), ("Exports", "PDF report with charts, image sharing")],
+        sheet=[("Publisher", "JDG inc., Quebec, Canada"), ("Identifier", "JDG-inc.AcousticDetector"), ("Languages", "English, French, Spanish, German, Portuguese (Brazil), Italian, Japanese"), ("Exports", "PDF report with charts, image sharing")],
         faq_eyebrow="Frequently asked questions", faq_h="Before you download",
         faq=[("Is my device compatible?", "If your iPhone runs iOS 17 or later, it is compatible. LiDAR is not required: it only adds the automatic room scan."),
              ("How much does it cost?", "The app is free. The optional one-time \"Acoustic Detector Complete\" purchase (CA$4.99) unlocks Treatment and Calculators, with no subscription."),
@@ -263,7 +278,7 @@ CONTACT = {
         eyebrow="Contact", h1="Contact et assistance",
         lead="Une question, un bogue à signaler ou une suggestion ? Chaque message est lu et reçoit une réponse personnelle.",
         blocks=[("Assistance et questions", "Précisez si possible votre modèle d'iPhone et votre version d'iOS.", f'<a href="mailto:{EMAIL}?subject=Acoustic%20Detector">{EMAIL}</a>'),
-                ("Presse et médias", "Un dossier de presse bilingue (présentation, fonctionnalités, fiche technique) est disponible sur demande.", f'<a href="mailto:{EMAIL}?subject=Acoustic%20Detector%20-%20Presse">{EMAIL}</a>'),
+                ("Presse et médias", "Un dossier de presse (présentation, fonctionnalités, fiche technique) est disponible en français et en anglais sur demande.", f'<a href="mailto:{EMAIL}?subject=Acoustic%20Detector%20-%20Presse">{EMAIL}</a>'),
                 ("Éditeur", "Acoustic Detector est conçue et développée par JDG inc.", "JDG inc. — Québec, Canada"),
                 ("Application", "Disponible sur l'App Store pour iPhone sous iOS 17+.", '<a href="telechargement.html">Voir la page de téléchargement</a>')],
         faq_h="Questions fréquentes",
@@ -271,8 +286,8 @@ CONTACT = {
              ("Le scan de pièce par LiDAR fonctionne-t-il sur tous les iPhone ?", "Non, seulement sur les modèles Pro équipés d'un capteur LiDAR (iPhone 12 Pro et plus récent). Sur les autres iPhone, les dimensions de la pièce s'entrent manuellement dans le mode Traitement — toutes les fonctionnalités de calcul restent disponibles."),
              ("Le calcul de réverbération (RT60) est-il exact ?", "Le mode Traitement offre deux estimations : un calcul théorique (formule de Sabine, basé sur vos dimensions et matériaux, par bande d'octave) et une mesure en direct par salve de bruit. Les deux sont des approximations utiles pour orienter un traitement acoustique, pas des mesures de laboratoire."),
              ("Mes mesures sont-elles envoyées quelque part ?", 'Non. Aucune donnée ne quitte votre appareil. Voir notre <a href="confidentialite.html">politique de confidentialité</a>.'),
-             ("L'app est-elle offerte en anglais ?", "Oui. Acoustic Detector est entièrement bilingue — un bouton FR/EN dans le menu principal bascule la langue de l'interface, indépendamment de la langue réglée sur votre iPhone."),
-             ("Y a-t-il un abonnement ?", "Non. Acoustic Detector se télécharge gratuitement : le sonomètre, l'analyseur, le tableau des mesures et l'export PDF sont inclus. Traitement et Calculateurs se débloquent avec un achat unique (4,99 $ CA), sans abonnement. Les mises à jour sont incluses. Si vous aviez acheté l'app avant qu'elle devienne gratuite, tout reste débloqué automatiquement."),
+             ("L'app est-elle offerte en anglais et dans d'autres langues ?", "Oui. Acoustic Detector parle 7 langues (français, anglais, espagnol, allemand, portugais, italien et japonais) — un bouton de langue dans le menu principal bascule l'interface, indépendamment de la langue réglée sur votre iPhone."),
+             ("Y a-t-il un abonnement ?", "Non. Acoustic Detector se télécharge gratuitement : le sonomètre, l'analyseur, l'accordeur, le tableau des mesures et l'export PDF sont inclus. Traitement et Calculateurs se débloquent avec un achat unique (4,99 $ CA), sans abonnement. Les mises à jour sont incluses. Si vous aviez acheté l'app avant qu'elle devienne gratuite, tout reste débloqué automatiquement."),
              ("Comment restaurer mon achat ?", "Sur un nouvel iPhone ou après une réinstallation, ouvrez Traitement ou Calculateurs et touchez « Restaurer mes achats », avec le même identifiant Apple que pour l'achat."),
              ("L'app existe-t-elle sur Android ?", "Pas pour l'instant — Acoustic Detector est offerte sur iPhone (iOS 17 ou plus récent).")],
         cta_h="Une question avant de télécharger ?", cta_p="Écrivez-nous — on répond directement, sans détour.",
@@ -290,8 +305,8 @@ CONTACT = {
              ("Does the LiDAR room scan work on every iPhone?", "No, only on Pro models with a LiDAR sensor (iPhone 12 Pro and later). On other iPhones, you enter the room's dimensions manually in Treatment mode — every calculation feature remains available."),
              ("Is the reverberation (RT60) calculation exact?", "Treatment mode offers two estimates: a theoretical calculation (Sabine formula, based on your dimensions and materials, per octave band) and a live measurement using a noise burst. Both are useful approximations to guide acoustic treatment, not laboratory measurements."),
              ("Are my measurements sent anywhere?", 'No. No data ever leaves your device. See our <a href="privacy.html">privacy policy</a>.'),
-             ("Is the app available in French?", "Yes. Acoustic Detector is fully bilingual — an EN/FR button in the main menu switches the interface language, independently of your iPhone's language."),
-             ("Is there a subscription?", "No. Acoustic Detector is free to download: the sound meter, analyzer, measurements table and PDF export are included. Treatment and Calculators unlock with a one-time purchase (CA$4.99), no subscription. Updates are included. If you bought the app before it became free, everything stays unlocked automatically."),
+             ("Is the app available in French and other languages?", "Yes. Acoustic Detector speaks 7 languages (English, French, Spanish, German, Portuguese, Italian and Japanese) — a language button in the main menu switches the interface, independently of your iPhone's language."),
+             ("Is there a subscription?", "No. Acoustic Detector is free to download: the sound meter, analyzer, tuner, measurements table and PDF export are included. Treatment and Calculators unlock with a one-time purchase (CA$4.99), no subscription. Updates are included. If you bought the app before it became free, everything stays unlocked automatically."),
              ("How do I restore my purchase?", "On a new iPhone or after reinstalling, open Treatment or Calculators and tap “Restore Purchases”, using the same Apple ID as for the purchase."),
              ("Is the app available on Android?", "Not at the moment — Acoustic Detector is available on iPhone (iOS 17 or later).")],
         cta_h="A question before you download?", cta_p="Write to us — we answer directly, no detours.",
@@ -327,11 +342,31 @@ PRIVACY = {
         ]),
 }
 
+# ============================================================== langues supplémentaires (tools/i18n/<lang>.py)
+HERO = {
+    "fr": dict(title="RT60 PAR BANDE D'OCTAVE", target="CIBLE 0,50 s", axis="FRÉQUENCE (Hz)", calc="RT60 CALCULÉ", result="0,77 s", note="Estimation indicative · modèle de Sabine", dec=","),
+    "en": dict(title="RT60 PER OCTAVE BAND", target="TARGET 0.50 s", axis="FREQUENCY (Hz)", calc="CALCULATED RT60", result="0.77 s", note="Indicative estimate · Sabine model", dec="."),
+}
+OG = {
+    "fr": ("APP IPHONE — GRATUITE", "Écoutez. Analysez. Corrigez.", "Sonomètre · RT60 · Carte du bruit · LiDAR · Accordeur"),
+    "en": ("IPHONE APP — FREE", "Listen. Analyze. Correct.", "Sound meter · RT60 · Noise map · LiDAR · Tuner"),
+}
+for _l in EXTRA:
+    _m = importlib.import_module(f"i18n.{_l}")
+    T[_l] = {**_m.T, "locale": _m.LOCALE}
+    HOME[_l], FEATURES[_l], DOWNLOAD[_l], CONTACT[_l], PRIVACY[_l] = _m.HOME, _m.FEATURES, _m.DOWNLOAD, _m.CONTACT, _m.PRIVACY
+    JDG_APPS[_l], HERO[_l], OG[_l] = _m.JDG, _m.HERO, _m.OG
+    LABELS[_l], HREFLANGS[_l], LOCALES[_l] = _m.LABEL, _m.HREFLANG, _m.LOCALE
+    APPSTORE[_l] = APPSTORE_BASE + "?l=" + _m.STORE_L
+    for _k in FILES:
+        FILES[_k][_l] = FILES[_k]["en"]
+T["fr"]["locale"], T["en"]["locale"] = "fr_CA", "en_CA"
+
 
 # ============================================================== visuel d'accueil
 def hero_svg(lang):
-    fr = lang == "fr"
-    dec = (lambda v: f"{v:.1f}".replace(".", ",")) if fr else (lambda v: f"{v:.1f}")
+    hx = HERO[lang]
+    dec = lambda v: f"{v:.1f}".replace(".", hx["dec"])
     vals = [2.9, 1.6, 1.0, 0.6, 0.5, 0.4]
     names = ["125", "250", "500", "1k", "2k", "4k"]
     base, top = 330, 110
@@ -351,12 +386,7 @@ def hero_svg(lang):
         parts.append(f'<text x="{x + bw / 2}" y="{base + 19}" text-anchor="middle" fill="#C4B4E5" font-size="11">{names[i]}</text>')
     ty = base - 0.5 * k
     parts.append(f'<line x1="36" y1="{ty:.1f}" x2="364" y2="{ty:.1f}" stroke="#fff" stroke-opacity=".75" stroke-dasharray="6 5"/>')
-    title = "RT60 PAR BANDE D'OCTAVE" if fr else "RT60 PER OCTAVE BAND"
-    target = "CIBLE 0,50 s" if fr else "TARGET 0.50 s"
-    axis = "FRÉQUENCE (Hz)" if fr else "FREQUENCY (Hz)"
-    calc = "RT60 CALCULÉ" if fr else "CALCULATED RT60"
-    result = "0,77 s" if fr else "0.77 s"
-    note = "Estimation indicative · modèle de Sabine" if fr else "Indicative estimate · Sabine model"
+    title, target, axis, calc, result, note = hx["title"], hx["target"], hx["axis"], hx["calc"], hx["result"], hx["note"]
     return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" font-family="ui-monospace, Menlo, Consolas, monospace" role="img" aria-label="{title}">
 <text x="36" y="56" fill="#C4B4E5" font-size="13" letter-spacing="2">{title}</text>
 <line x1="36" y1="92" x2="66" y2="92" stroke="#fff" stroke-opacity=".75" stroke-dasharray="6 5"/>
@@ -379,34 +409,30 @@ def esc(s):
 def page(lang, key, title, desc, body, depth=1, jsonld=None):
     """depth=1 : fichier dans fr/ ou en/ ; depth=0 : ancienne adresse à la racine."""
     t = T[lang]
-    other = "en" if lang == "fr" else "fr"
     up = "../" if depth else ""
     own = "" if depth else f"{lang}/"
-    oth = f"../{other}/" if depth else f"{other}/"
     nav = "".join(f'<li><a href="{own}{FILES[k][lang]}"{" aria-current=\"page\"" if k == key else ""}>{t["nav"][k]}</a></li>' for k in NAV_ORDER)
     foot = "".join(f'<li><a href="{own}{FILES[k][lang]}">{t["nav"][k]}</a></li>' for k in NAV_ORDER + ["privacy"])
-    if depth:
-        sw_fr = f'<a href="{(oth if lang == "en" else "")}{FILES[key]["fr"]}" hreflang="fr" lang="fr"{" class=\"active\"" if lang == "fr" else ""}>FR</a>'
-        sw_en = f'<a href="{(oth if lang == "fr" else "")}{FILES[key]["en"]}" hreflang="en" lang="en"{" class=\"active\"" if lang == "en" else ""}>EN</a>'
-    else:
-        sw_fr = f'<a href="fr/{FILES[key]["fr"]}" hreflang="fr" lang="fr"{" class=\"active\"" if lang == "fr" else ""}>FR</a>'
-        sw_en = f'<a href="en/{FILES[key]["en"]}" hreflang="en" lang="en"{" class=\"active\"" if lang == "en" else ""}>EN</a>'
+    sw = ""
+    for l in LANGS:
+        href = (FILES[key][l] if l == lang else f"../{l}/{FILES[key][l]}") if depth else f"{l}/{FILES[key][l]}"
+        sw += f'<a href="{href}" hreflang="{HREFLANGS[l]}" lang="{HREFLANGS[l]}"{" class=\"active\"" if l == lang else ""}>{LABELS[l]}</a>'
     path = lambda l: f"{SITE}/{l}/{'' if key == 'home' else FILES[key][l]}"
-    canon, alt = path(lang), {l: path(l) for l in ("fr", "en")}
+    canon = path(lang)
+    alts = "".join(f'<link rel="alternate" hreflang="{HREFLANGS[l]}" href="{path(l)}">\n' for l in LANGS)
+    alt_loc = "".join(f'<meta property="og:locale:alternate" content="{LOCALES[l]}">\n' for l in LANGS if l != lang)
     og = f"{SITE}/assets/img/og-image-{lang}.png"
     ld = f'<script type="application/ld+json">\n{json.dumps(jsonld, ensure_ascii=False, indent=2)}\n</script>\n' if jsonld else ""
     cta = f'<a href="{own}{FILES["download"][lang]}" class="btn btn--primary btn--sm">{t["cta"]}</a>'
     return f"""<!DOCTYPE html>
-<html lang="{lang}">
+<html lang="{HREFLANGS[lang]}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(title)}</title>
 <meta name="description" content="{esc(desc)}">
 <link rel="canonical" href="{canon}">
-<link rel="alternate" hreflang="fr" href="{alt['fr']}">
-<link rel="alternate" hreflang="en" href="{alt['en']}">
-<link rel="alternate" hreflang="x-default" href="{alt['fr']}">
+{alts}<link rel="alternate" hreflang="x-default" href="{path('fr')}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Acoustic Detector">
 <meta property="og:title" content="{esc(title)}">
@@ -416,7 +442,7 @@ def page(lang, key, title, desc, body, depth=1, jsonld=None):
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:locale" content="{t['locale']}">
-<meta property="og:locale:alternate" content="{t['alt_locale']}">
+{alt_loc}
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{esc(title)}">
 <meta name="twitter:description" content="{esc(desc)}">
@@ -440,7 +466,7 @@ def page(lang, key, title, desc, body, depth=1, jsonld=None):
       <ul class="main-nav__links">{nav}</ul>
     </nav>
     <div class="header-actions">
-      <div class="lang-switch">{sw_fr}{sw_en}</div>
+      <div class="lang-switch">{sw}</div>
       {cta}
       <button class="nav-toggle" aria-label="{t['menu']}" aria-expanded="false" aria-controls="main-nav"><span></span><span></span><span></span></button>
     </div>
@@ -486,7 +512,7 @@ def jsonld(lang):
     return {
         "@context": "https://schema.org", "@type": "MobileApplication", "name": "Acoustic Detector",
         "operatingSystem": "iOS 17+", "applicationCategory": "UtilitiesApplication",
-        "url": f"{SITE}/{lang}/", "description": h["desc"], "inLanguage": ["fr", "en"],
+        "url": f"{SITE}/{lang}/", "description": h["desc"], "inLanguage": [HREFLANGS[l] for l in LANGS],
         "image": f"{SITE}/assets/img/logo-large.png", "installUrl": APPSTORE[lang], "sameAs": [APPSTORE_BASE],
         "offers": {"@type": "Offer", "price": "0", "priceCurrency": "CAD"},
         "publisher": {"@type": "Organization", "name": "JDG inc.",
@@ -706,10 +732,13 @@ def redirect(dest, lang="fr", auto=True):
     script = """<script>
   (function () {
     var lang = (navigator.language || "fr").toLowerCase();
-    window.location.replace(lang.indexOf("fr") === 0 ? "fr/index.html" : "en/index.html");
+    var map = {fr: "fr", es: "es", de: "de", pt: "pt", it: "it", ja: "ja"};
+    window.location.replace((map[lang.slice(0, 2)] || "en") + "/index.html");
   })();
 </script>
 """ if auto else ""
+    names = {"fr": "Français", "en": "English", "es": "Español", "de": "Deutsch", "pt": "Português", "it": "Italiano", "ja": "日本語"}
+    links = " — ".join(f'<a href="{l}/index.html" style="color:#39FF14">{names[l]}</a>' for l in LANGS)
     return f"""<!DOCTYPE html>
 <html lang="{lang}">
 <head>
@@ -719,7 +748,7 @@ def redirect(dest, lang="fr", auto=True):
 <title>Acoustic Detector</title>
 <link rel="canonical" href="{SITE}/{dest}">
 {script}</head>
-<body style="background:#1E0C36;color:#fff;font-family:sans-serif"><p><a href="fr/index.html" style="color:#39FF14">Français</a> — <a href="en/index.html" style="color:#39FF14">English</a></p></body>
+<body style="background:#1E0C36;color:#fff;font-family:sans-serif"><p>{links}</p></body>
 </html>
 """
 
@@ -747,15 +776,14 @@ def not_found():
 def sitemap():
     urls = []
     for key in NAV_ORDER + ["privacy"]:
-        for lang in ("fr", "en"):
+        for lang in LANGS:
             path = lambda l: f"{SITE}/{l}/{'' if key == 'home' else FILES[key][l]}"
             prio = "1.0" if key == "home" else ("0.8" if key in ("features", "download") else "0.5")
             freq = "weekly" if key == "home" else "monthly"
+            alts = "".join(f'    <xhtml:link rel="alternate" hreflang="{HREFLANGS[l]}" href="{path(l)}"/>\n' for l in LANGS)
             urls.append(f"""  <url>
     <loc>{path(lang)}</loc>
-    <xhtml:link rel="alternate" hreflang="fr" href="{path('fr')}"/>
-    <xhtml:link rel="alternate" hreflang="en" href="{path('en')}"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="{path('fr')}"/>
+{alts}    <xhtml:link rel="alternate" hreflang="x-default" href="{path('fr')}"/>
     <lastmod>{TODAY}</lastmod>
     <changefreq>{freq}</changefreq>
     <priority>{prio}</priority>
@@ -765,7 +793,7 @@ def sitemap():
 
 
 def build():
-    for lang in ("fr", "en"):
+    for lang in LANGS:
         d = ROOT / lang
         d.mkdir(exist_ok=True)
         (d / FILES["home"][lang]).write_text(home(lang), encoding="utf-8")
