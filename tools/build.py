@@ -363,6 +363,53 @@ for _l in EXTRA:
 T["fr"]["locale"], T["en"]["locale"] = "fr_CA", "en_CA"
 
 
+def apply_15():
+    """Version 1.5 : Enregistreur, Égaliseur, iPad, confidentialité (textes dans tools/i18n/v15.py), toutes langues."""
+    import i18n.v15 as v15
+    for lang in LANGS:
+        v = v15.V[lang]
+        h, f, d, c, p = HOME[lang], FEATURES[lang], DOWNLOAD[lang], CONTACT[lang], PRIVACY[lang]
+        # accueil
+        h["desc"] = v["home_desc"]
+        assert h["meta"][1] == ("", "iPhone"), lang
+        h["meta"][1] = ("", "iPhone · iPad")
+        h["new_h"], h["new_lead"], h["new_status"], h["cta_p"] = v["new_h"], v["new_lead"], v["status"], v["home_cta_p"]
+        h["new"] = [v["new_rec"], v["new_eq"], v["new_ipad"]] + h["new"][:-1] + [v["new_last"]]
+        t = next(i for i, w in enumerate(h["what"]) if w[2])          # la carte « Nouveau » devient une carte ordinaire
+        badge = h["what"][t][2]
+        h["what"][t] = h["what"][t][:2] + ("",)
+        h["what"][t + 1:t + 1] = [v["card_rec"] + (badge,), v["card_eq"] + (badge,)]
+        assert h["shots"][0][0] == "menu", lang
+        h["shots"][1:1] = [("eq",) + v["shot_eq"], ("replay",) + v["shot_replay"]]
+        assert h["nums"][0][0] == "5", lang
+        h["nums"][0] = ("8", v["nums_label"])
+        assert h["plans"][1][3] is True, lang
+        h["plans"][1][2].insert(1, v["plan_item"])
+        # fonctionnalités
+        f["desc"] = v["feat_desc"]
+        k = next(i for i, sp in enumerate(f["spots"]) if sp[0] == "tuner")
+        f["spots"][k + 1:k + 1] = [v["spot_rec"], v["spot_eq"]]
+        f["cmp"].insert(len(f["cmp"]) - 1, (v["cmp_row"], "—", "✓"))
+        # téléchargement
+        d["desc"], d["req_note"] = v["dl_desc"], v["dl_req_note"]
+        assert d["specs"][1][1] == "iPhone", lang
+        d["specs"][1] = (d["specs"][1][0], "iPhone · iPad")
+        d["faq"][0] = (d["faq"][0][0], v["dl_faq_compat"])
+        d["faq"][1] = (d["faq"][1][0], v["dl_faq_price"])
+        # contact
+        c["blocks"][3] = (c["blocks"][3][0], v["ct_app_p"], c["blocks"][3][2])
+        c["faq"][5] = (c["faq"][5][0], v["ct_sub"])
+        c["faq"][-1] = (c["faq"][-1][0], v["ct_android"])
+        # confidentialité : l'Enregistreur conserve maintenant des fichiers audio (sur l'appareil seulement)
+        p["updated"] = v["pv_updated"]
+        for idx, key in ((0, "pv_mic"), (2, "pv_local"), (4, "pv_iap")):
+            p["sections"][idx] = (p["sections"][idx][0], v[key])
+        OG[lang] = OG[lang][:2] + (v["og_foot"],)
+
+
+apply_15()
+
+
 # ============================================================== visuel d'accueil
 def hero_svg(lang):
     hx = HERO[lang]
@@ -511,7 +558,7 @@ def jsonld(lang):
     h = HOME[lang]
     return {
         "@context": "https://schema.org", "@type": "MobileApplication", "name": "Acoustic Detector",
-        "operatingSystem": "iOS 17+", "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "iOS 17+, iPadOS 17+", "applicationCategory": "UtilitiesApplication",
         "url": f"{SITE}/{lang}/", "description": h["desc"], "inLanguage": [HREFLANGS[l] for l in LANGS],
         "image": f"{SITE}/assets/img/logo-large.png", "installUrl": APPSTORE[lang], "sameAs": [APPSTORE_BASE],
         "offers": {"@type": "Offer", "price": "0", "priceCurrency": "CAD"},

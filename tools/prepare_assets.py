@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prépare les images du site Acoustic Detector (captures 1.2 en WebP, vignette du logo, image de partage).
+"""Prépare les images du site Acoustic Detector (captures 1.2 à 1.5 en WebP, vignette du logo, image de partage).
 
 Sources : ../../03-Screenshots-AppStore-1.2/{FR,EN}/*.png (captures 1242×2688 de l'app)
           ../../03-Partenaires/source/{logo.png, fonts/}
@@ -26,18 +26,21 @@ KEYS = {  # clé → fichier de capture
 
 
 
+NEW15 = {"menu": "01_menu", "eq": "04_egaliseur", "replay": "03_reecoute"}   # captures 1.5 (menu, égaliseur, réécoute)
+
+
 def shot_file(lang, key):
-    """menu et accordeur : captures les plus récentes (1.4 / 1.4.1) ; le reste : 1.2 (FR, EN) ou 1.3 (autres)."""
+    """menu, égaliseur, réécoute : captures 1.5 ; accordeur : 1.4.1 ; le reste : 1.2 (FR, EN) ou 1.3 (autres)."""
     base, d14 = DIRS[lang]
-    if key == "menu":
-        return ROOT / "03-Screenshots-AppStore-1.4" / d14 / "01_menu.png"
+    if key in NEW15:
+        return ROOT / "03-Screenshots-AppStore-1.5" / "iphone-1242x2688" / d14 / f"{NEW15[key]}.png"
     if key == "tuner":
         return ROOT / "03-Screenshots-AppStore-1.4.1" / d14 / "accordeur.png"
     return ROOT / base / f"{KEYS[key]}.png"
 
 
 for lang in DIRS:
-    for key in list(KEYS) + ["tuner"]:
+    for key in list(KEYS) + ["tuner", "eq", "replay"]:
         f = shot_file(lang, key)
         if not f.exists():   # 03_historique et 09_tableau_detail_3d n'existent pas pour les langues 1.3
             continue
